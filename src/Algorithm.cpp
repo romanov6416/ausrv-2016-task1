@@ -3,6 +3,9 @@
 //
 
 #include <iostream>
+#include <boost/math/common_factor_rt.hpp>
+
+
 #include "Algorithm.h"
 
 void Algorithm::compute() {
@@ -27,6 +30,7 @@ void Algorithm::compute() {
 		return;
 	}
 	std::cout << "success " << std::endl;
+	
 }
 
 bool Algorithm::updateTime(const unsigned newT, bool ignoreCycle = false) {
@@ -82,6 +86,19 @@ const Job & Algorithm::getWaitedJobByCriteria() {
 			it = curIt;
 	}
 	return *it;
+}
+
+Algorithm::Algorithm(const std::unordered_set<Job> &jobs, const unsigned int cycleDuration,
+                     const unsigned int maxChainLen, const unsigned int reserve) :
+	jobs(jobs),
+	cycleDuration(cycleDuration),
+	maxChainLen(maxChainLen),
+	reserve(reserve),
+    border(1)
+{
+	for (auto & j : jobs)
+		border = boost::math::lcm(border, j.getDuration());
+	clear();
 }
 
 
