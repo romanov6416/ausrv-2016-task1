@@ -24,9 +24,33 @@ int main(int argc, char * argv[]) {
 		}
 		cycleDuration *= 1000; // convert to us
 		
-		std::cout << "jobs: " << jobs.size() << '\n';
-		Algorithm a(jobs, static_cast<unsigned>(cycleDuration), jobs.size(), 0);
-		a.compute();
+//		std::cout << "jobs: " << jobs.size() << '\n';
+		Percent bestReserve = UNDEFINED_PERCENT;
+		for (Percent reserve = MIN_PERCENT; reserve <= MAX_PERCENT; ++reserve) {
+			try {
+				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), jobs.size(), reserve);
+				a.compute();
+			} catch (Exception & e) {
+//				std::cout << "fail to build plan with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
+				continue;
+			}
+//			std::cout << "success to build plat with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
+			bestReserve = reserve;
+		}
+		unsigned minChainSize = jobs.size() + 1;
+		std::cout << "best reserve " << bestReserve << "%" << std::endl;
+		for (unsigned chainSize = 1; chainSize < jobs.size(); ++chainSize) {
+			try {
+				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), chainSize, bestReserve);
+				a.compute();
+			} catch(Exception & e) {
+				continue;
+			}
+			minChainSize = chainSize;
+			break;
+		}
+		std::cout << "min chain size " << minChainSize << std::endl;
+		
 		
 		
 	} catch(const char * err) {

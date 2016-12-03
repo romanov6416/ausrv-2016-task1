@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <functional>
 
+#include "Types.h"
+
 class Job {
 public:
 	Job(const unsigned int id, const unsigned int duration, const unsigned int begin, const unsigned int end,
@@ -16,17 +18,17 @@ public:
 	
 	unsigned int getId() const;
 	
-	unsigned int getDuration() const;
+	Time getDuration() const;
 	
-	unsigned int getBegin() const;
+	Time getBegin() const;
 	
-	unsigned int getEnd() const;
+	Time getEnd() const;
 	
 	bool operator==(const Job &j) const;
 	
-	bool operator!=(const Job &rhs) const;
+	bool operator!=(const Job &j) const;
 	
-	unsigned int getPeriod() const;
+	Time getPeriod() const;
 	
 private:
 	unsigned id;
@@ -37,7 +39,6 @@ private:
 	
 	
 };
-
 
 namespace std {
 	template <> struct hash<Job>

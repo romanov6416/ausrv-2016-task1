@@ -17,19 +17,19 @@ unsigned int Job::getId() const {
 	return id;
 }
 
-unsigned int Job::getDuration() const {
+Time Job::getDuration() const {
 	return duration;
 }
 
-unsigned int Job::getBegin() const {
+Time Job::getBegin() const {
 	return begin;
 }
 
-unsigned int Job::getEnd() const {
+Time Job::getEnd() const {
 	return end;
 }
 
-unsigned int Job::getPeriod() const {
+Time Job::getPeriod() const {
 	return period;
 }
 
@@ -37,6 +37,6 @@ bool Job::operator==(const Job &j) const {
 	return id == j.id;
 }
 
-bool Job::operator!=(const Job &rhs) const {
-	return !(rhs == *this);
+bool Job::operator!=(const Job &j) const {
+	return !(j == *this);
 }

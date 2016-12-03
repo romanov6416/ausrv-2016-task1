@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 
-set(SOURCE_FILES src/main.cpp src/Algorithm.cpp src/Algorithm.h src/Job.cpp src/Job.h src/Parser.cpp src/Parser.h src/Exceptions.h)
+set(SOURCE_FILES src/main.cpp src/Algorithm.cpp src/Algorithm.h src/Job.cpp src/Job.h src/Parser.cpp src/Parser.h src/Exceptions.h src/Types.h)
 add_executable(prog_02160506_521 ${SOURCE_FILES})

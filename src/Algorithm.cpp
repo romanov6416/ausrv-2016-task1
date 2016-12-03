@@ -15,165 +15,150 @@ void Algorithm::compute() {
 		while (curT < border) {
 			// init empty chain
 			cycles.push_back(Chain());
-			auto &curChain = *cycles.rbegin();
-			// update waited jobs
-			updateWaitedJobs();
-			std::cout << "ew curT " << curT << std::endl;
-			
-			while (waitedJobs.size() > 0 and curT < border and curChain.size() < maxChainLen) {
-				std::cout << "waited jobs size " << waitedJobs.size() << '\n';
+			auto & curChain = *cycles.rbegin();
+//			std::cout << "hear" << std::endl;
+			JobWrapper * foundJobPtr;
+			while ((foundJobPtr = findAvailableJobs()) != nullptr
+			       and curT < border
+			       and curChain.size() < maxChainLen) {
 				// choose job and push it to chain
-				auto j = getWaitedJobByCriteria();
-				waitedJobs.erase(j);
-				try {
-					updateTime(curT + j.getDuration(), false);
-				} catch(Exception & e) {
-					if (e == CHANGE_CYCLE)
-						waitedJobs.insert(j);
-						break;
-					throw;
-				}
-				// add job to chain
-				curChain.push_back(j);
-				std::cout << "waited jobs size " << waitedJobs.size() << '\n';
-				std::cout << "curT " << curT << std::endl;
-				
+				auto & j = popWaitedJobByCriteria(foundJobPtr);
+				if (isCycleChanged(j.getDuration()))
+					break;
+				addJobToChain(j);
+				moveTime(j.getDuration());
 			}
-//			std::cout << "waitedJobs.size() " << waitedJobs.size() << std::endl;
 			// move time to begin of the cycle
 			if (curT < border)
-				updateTime(curT + cycleDuration - (curT % cycleDuration), true);
+				moveTime(cycleDuration - (curT % cycleDuration));
+//			std::cout << "ew curT " << curT << std::endl;
+			
 		}
 	} catch (const char * s) {
-		std::cout << "error: " << s << std::endl;
+//		std::cout << "error: " << s << std::endl;
 		return;
 	}
-	std::cout << "success " << std::endl;
+//	std::cout << "success " << std::endl;
 }
 
-bool Algorithm::updateTime(const unsigned newT, bool force) {
-	// check that "curT <= newT" and out of border
-	if (newT < curT)
-		throw NEW_TIME_LESS_OLD_TIME;
+void Algorithm::moveTime(const Time &shift) {
+	Time newT = curT + shift;
 	
-	// check out of range
-	if (border < newT and not force)
-		throw NEW_TIME_OUT_OF_RANGE;
+//	// check out of range
+//	if (border < newT)
+//		throw TIME_OUT_OF_RANGE;
 	
-	// change cycle changed
-	if ((curT / cycleDuration != newT / cycleDuration) and not force)
-		throw CHANGE_CYCLE;
-	
+	// check the job expired in new time
 	for (auto & j : jobs) {
-		unsigned oldPeriodN = curT / j.getPeriod();
-		unsigned newPeriodN = newT / j.getPeriod();
-//		unsigned periodLocalTime = newT % j.getPeriod();
-		// consider reserve in cycle
-		unsigned beginWorkedTime = getTotalBeginTime(j, newPeriodN);
-		unsigned endWorkedTime = getTotalEndTime(j, newPeriodN);
-//		std::cout << oldPeriodN << " " << newPeriodN << std::endl;
-		if (newPeriodN - oldPeriodN > 1)
-			throw PERIOD_MISSED;
-		if (oldPeriodN < newPeriodN) {
-			if (waitedJobs.find(j) != waitedJobs.cend())
-				throw OLD_PERIOD_IMPOSSIBLE_PERFORM_JOB_IN_OLD_PERIOD;
-			if (beginWorkedTime < newT and endWorkedTime < newT)
-				// time is out of range of work time for this job
-				throw "exception: impossible to perform job in new period";
-		} else if (oldPeriodN == newPeriodN) {
-			if (waitedJobs.find(j) != waitedJobs.cend() and endWorkedTime < newT)
-				throw IMPOSSIBLE_PERFORM_JOB_IN_PERIOD;
-		} else
-			throw OLD_PERIOD_MORE_NEW_PERIOD;
+		if (j.isExpired(newT, reserve))
+			throw JOB_WORKED_TIME_EXPIRED;
 	}
+	
 	curT = newT;
-	updateWaitedJobs();
-	return false;
 }
 
-void Algorithm::updateWaitedJobs() {
-	waitedJobs.clear();
-		
-	for (auto & j : jobs) {
-		unsigned periodNumber = curT / j.getPeriod();
-		auto totalBegin = getTotalBeginTime(j, periodNumber);
-		auto totalEnd = getTotalEndTime(j, periodNumber);
-		if (totalBegin <= curT and curT <= totalEnd and isJobWait(j))
-			waitedJobs.insert(j);
-	}
-}
 
 void Algorithm::clear() {
 	curT = 0;
-	waitedJobs.clear();
 	cycles.clear();
 }
 
-const Job Algorithm::getWaitedJobByCriteria() {
-	auto it = waitedJobs.cbegin();
-	for (auto curIt = waitedJobs.cbegin(); curIt != waitedJobs.cend(); ++curIt) {
-		auto stockCurIt = (curIt->getEnd() - curIt->getBegin()) - curIt->getDuration();
-		auto stockIt = (it->getEnd() - it->getBegin()) - it->getDuration();
-		if (stockCurIt < stockIt)
-			it = curIt;
+JobWrapper & Algorithm::popWaitedJobByCriteria(JobWrapper * foundJobPtr) {
+	if (foundJobPtr == nullptr)
+		throw NULL_POINTER;
+	auto jobByCriteriaPtr = foundJobPtr;
+	for (auto & j : jobs) {
+		if (j.isWait(curT) and j.isCanRun(curT, reserve)) {
+			if (jobByCriteriaPtr->getCriteriaValue() > j.getCriteriaValue())
+				jobByCriteriaPtr = const_cast<JobWrapper *>(&j);
+		}
 	}
-	return *it;
+	return *jobByCriteriaPtr;
 }
 
 Algorithm::Algorithm(const std::unordered_set<Job> &jobs, const unsigned int cycleDuration,
                      const unsigned int maxChainLen, const unsigned int reserve) :
-	jobs(jobs),
 	cycleDuration(cycleDuration),
 	maxChainLen(maxChainLen),
 	reserve(reserve),
     border(1)
 {
 	for (auto & j : jobs) {
+		this->jobs.insert(JobWrapper(j));
 		border = boost::math::lcm(border, j.getPeriod());
 	}
 }
 
-bool Algorithm::isJobWait(const Job &job) {
-//	auto periodNumber = curT / job.getPeriod();
-	auto periodStartTime = curT - (curT % job.getPeriod());
-	auto startCycleNumber = periodStartTime / cycleDuration;
+JobWrapper * Algorithm::findAvailableJobs() {
+	for (auto & j : jobs)
+		if (j.isWait(curT) and j.isCanRun(curT, reserve))
+			return const_cast<JobWrapper *>(&j);
+	return nullptr;
+}
+
+void Algorithm::addJobToChain(JobWrapper &j) {
+	cycles.rbegin()->push_back(j);
+	j.setLastStartTime(curT);
+}
+
+bool Algorithm::isCycleChanged(const Time &shift) {
+	return (curT / cycleDuration != (curT + shift) / cycleDuration);
+}
+
+
+JobWrapper::JobWrapper(const Job &job) : job(job), lastStartTime(UNDEFINED_TIME) {
+	criteriaValue = static_cast<int>(job.getEnd() - job.getBegin() - job.getDuration());
+	if (criteriaValue < 0)
+		throw WRONG_CRITERIA_VALUE;
+}
+
+bool JobWrapper::isWait(const Time & t) const {
+//	std::cout << lastStartTime << std::endl;
+	return lastStartTime == UNDEFINED_TIME
+	       or (lastStartTime / job.getPeriod()) < (t / job.getPeriod());
+}
+
+bool JobWrapper::isCanRun(const Time &t, const Percent & reserve) const {
+	auto localPeriodTime = t % job.getPeriod();
+	// note reserve; end of run time can be changed
+	auto endRunTime = std::min(job.getEnd(), job.getPeriod() * (MAX_PERCENT - reserve) / MAX_PERCENT);
+	return (localPeriodTime < job.getBegin()) // can not be running now, but can be running later
+	       or (localPeriodTime + job.getDuration() <= endRunTime); // check we have time to run job
 	
-	if (startCycleNumber * cycleDuration < periodStartTime) {
-		// part of cycle is not in job period
-		auto totalTime = startCycleNumber * cycleDuration;
-		Chain & curCycle = cycles[startCycleNumber];
-		unsigned curJobNumber = 0;
-		// miss jobs, executed in previous period
-		for (; curJobNumber < curCycle.size() and totalTime < periodStartTime; ++curJobNumber)
-			totalTime += curCycle[curJobNumber].getDuration();
-		// find job in cycle
-		for (; curJobNumber < curCycle.size(); ++curJobNumber)
-			if (curCycle[curJobNumber] == job)
-				return false;
-		++startCycleNumber;
+}
+
+unsigned JobWrapper::getId() const {
+	return job.getId();
+}
+
+bool JobWrapper::isExpired(const Time &t, const Percent &reserve) const{
+	auto lastPeriodNumber = lastStartTime / job.getPeriod();
+	auto curPeriodNumber = t / job.getPeriod();
+	if (lastPeriodNumber < curPeriodNumber) {
+		if (curPeriodNumber - lastPeriodNumber > 1)
+			return true;
+		if (not isCanRun(t, reserve))
+			return true;
 	}
-	// find job in cycles
-	for (auto n = startCycleNumber; n < cycles.size(); ++n)
-		for (auto & j : cycles[n])
-			if (job == j)
-				return false;
-	return true;
+	return false;
 }
 
-const unsigned Algorithm::getTotalBeginTime(const Job &j, const unsigned periodNumber) {
-	auto totalTime = periodNumber * j.getPeriod() + j.getBegin();
-	auto cycleLocalTime = totalTime % cycleDuration;
-	if (cycleLocalTime < cycleDuration * (100 - reserve) / 100)
-		return j.getBegin();
-	return j.getPeriod();
+const Time JobWrapper::getDuration() const {
+	return job.getDuration();
 }
 
-const unsigned Algorithm::getTotalEndTime(const Job &j, const unsigned periodNumber) {
-	auto totalTime = periodNumber * j.getPeriod() + j.getEnd();
-	auto cycleLocalTime = totalTime % cycleDuration;
-	if (cycleLocalTime < cycleDuration * (100 - reserve) / 100)
-		return j.getEnd();
-	return cycleDuration * (100 - reserve) / 100;
+bool JobWrapper::operator==(const JobWrapper &rhs) const {
+	return job == rhs.job;
 }
 
+bool JobWrapper::operator!=(const JobWrapper &rhs) const {
+	return !(rhs == *this);
+}
 
+void JobWrapper::setLastStartTime(Time lastStartTime) {
+	this->lastStartTime = lastStartTime;
+}
+
+int JobWrapper::getCriteriaValue() const {
+	return criteriaValue;
+}
