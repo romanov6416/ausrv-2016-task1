@@ -5,13 +5,16 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <unordered_set>
+#include "Job.h"
 #include "Parser.h"
+#include "Exceptions.h"
 
-std::vector<Job> Parser::parseJobs(const char *filename) {
+std::unordered_set<Job> Parser::parseJobs(const char *filename) {
 	std::ifstream f(filename, std::ios::in);
 	if (not f.is_open())
-		throw "can not open file";
-	std::vector<Job> jobs;
+		throw OPEN_FILE_ERROR;
+	std::unordered_set<Job> jobs;
 	for (int n = getInt(f); n >= 0; n = getInt(f)) {
 		unsigned id = n;
 		
@@ -32,14 +35,13 @@ std::vector<Job> Parser::parseJobs(const char *filename) {
 		unsigned endShift = n;
 		
 		unsigned duration = nWords * 20;
-		unsigned period = 1000 / frequency;
-		endShift = (n == 0) ? period : n;
+		unsigned period = 1000000 / frequency; // convert to us period
+		beginShift *= 1000; // convert to us
+		endShift = (endShift == 0) ? period : endShift * 1000; // convert to us
 		
-		jobs.push_back(Job(id, duration, beginShift, endShift, period));
+		Job j(id, duration, beginShift, endShift, period);
+		jobs.insert(j);
 	}
-		
-//	f >>
-////	f.open(filename);
 	return jobs;
 }
 

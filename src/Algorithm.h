@@ -33,9 +33,12 @@ private:
 	std::unordered_set<Job> waitedJobs;
 	std::vector<Chain> cycles;
 	
-	bool updateTime(const unsigned newT, bool ignoreCycle);
+	bool updateTime(const unsigned newT, bool force);
 	void updateWaitedJobs();
-	const Job & getWaitedJobByCriteria();
+	const Job getWaitedJobByCriteria();
+	bool isJobWait(const Job &j);
+	const unsigned getTotalBeginTime(const Job &j, const unsigned periodNumber);
+	const unsigned getTotalEndTime(const Job &j, const unsigned periodNumber);
 	
 //	void update()
 };

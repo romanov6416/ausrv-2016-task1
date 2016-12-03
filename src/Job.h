@@ -27,7 +27,7 @@ public:
 	bool operator!=(const Job &rhs) const;
 	
 	unsigned int getPeriod() const;
-
+	
 private:
 	unsigned id;
 	unsigned duration;

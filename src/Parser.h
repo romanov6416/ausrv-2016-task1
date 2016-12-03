@@ -6,14 +6,15 @@
 #define DATA_TRANSMISSION_SHEDULE_PARSER_H
 
 
-#include <vector>
+//#include <vector>
+#include <unordered_set>
 
 #include "Job.h"
 
 class Parser {
 	static const int getInt(std::ifstream & f);
 public:
-	static std::vector<Job> parseJobs(const char * filename);
+	static std::unordered_set<Job> parseJobs(const char *filename);
 };
 
 
