@@ -28,7 +28,7 @@ int main(int argc, char * argv[]) {
 		Percent bestReserve = UNDEFINED_PERCENT;
 		for (Percent reserve = MIN_PERCENT; reserve <= MAX_PERCENT; ++reserve) {
 			try {
-				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), jobs.size(), reserve);
+				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), static_cast<int>(jobs.size()), reserve);
 				a.compute();
 			} catch (Exception & e) {
 //				std::cout << "fail to build plan with reserve " << reserve << "% (code " <<  e << ")" << std::endl;

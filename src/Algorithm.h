@@ -11,50 +11,18 @@
 //#include <math>
 //#include <boost>
 //#include <hash>
-#include "Job.h"
 
 #include "Types.h"
-
-
-
-class JobWrapper {
-	const Job & job;
-	Time lastStartTime;
-	int criteriaValue;
-public:
-	JobWrapper(const Job &job);
-	unsigned getId() const;
-	const Time getDuration() const;
-	bool isWait(const Time & t) const;
-	
-	void setLastStartTime(Time lastStartTime);
-	int getCriteriaValue() const;
-	
-	bool operator==(const JobWrapper &rhs) const;
-	bool operator!=(const JobWrapper &rhs) const;
-	bool isCanRun(const Time & t, const Percent & ) const;
-	bool isExpired(const Time &t, const Percent &) const ;
-};
-
-namespace std {
-	template <> struct hash<JobWrapper>
-	{
-		size_t operator()(const JobWrapper & jWrap) const
-		{
-			return std::hash<int>()(jWrap.getId());
-		}
-	};
-}
+#include "JobWrapper.h"
 
 
 typedef std::vector<JobWrapper> Chain;
 
 
-
 class Algorithm {
 public:
-	Algorithm(const std::unordered_set<Job> &jobs, const unsigned int cycleDuration, const unsigned int maxChainLen,
-	          const unsigned int reserve);
+	Algorithm(const std::unordered_set<Job> &jobs, const Time &cycleDuration, const unsigned int maxChainLen,
+	          const Percent &reserve);
 	void compute();
 	void clear();
 
@@ -69,13 +37,11 @@ private:
 	std::unordered_set<JobWrapper> jobs;
 	Time cycleDuration;
 	unsigned maxChainLen;
-	Percent reserve; // percents
+	Percent reserve;
 	Time border;
 	
 	Time curT;
-//	std::unordered_set<Job> waitedJobs;
 	std::vector<Chain> cycles;
-//	void update()
 };
 
 
