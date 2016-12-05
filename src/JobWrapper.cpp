@@ -27,14 +27,20 @@ unsigned JobWrapper::getId() const {
 }
 
 bool JobWrapper::isExpired(const Time &t) const{
-	auto lastPeriodNumber = lastStartTime / job.getPeriod();
 	auto curPeriodNumber = t / job.getPeriod();
-	if (lastPeriodNumber < curPeriodNumber) {
-		if (curPeriodNumber - lastPeriodNumber > 1)
+	if (lastStartTime == UNDEFINED_TIME and curPeriodNumber > 0)
+		return true;
+	auto lastRunPeriodNumber = lastStartTime / job.getPeriod();
+	if (lastRunPeriodNumber < curPeriodNumber) {
+		// check move to time over one or more period
+		if (curPeriodNumber - lastRunPeriodNumber > 1)
 			return true;
-		if (getPriority(t) < 0)
+		// check possible to run job in new period
+		if (not canBeRunInPeriod(t))
 			return true;
 	}
+	//	impossible: lastRunPeriodNumber < curPeriodNumber
+	//	if (lastRunPeriodNumber == curPeriodNumber) then job is already run
 	return false;
 }
 
@@ -52,6 +58,16 @@ bool JobWrapper::operator!=(const JobWrapper &rhs) const {
 
 void JobWrapper::setLastStartTime(Time lastStartTime) {
 	this->lastStartTime = lastStartTime;
+}
+
+bool JobWrapper::canBeRunInPeriod(const Time &t) const {
+	auto localTime = t % job.getPeriod();
+	return localTime <= job.getEnd();
+	
+}
+
+const Job &JobWrapper::getJob() const {
+	return job;
 }
 //
 //int JobWrapper::getCriteriaValue(const Time &curTime) const {

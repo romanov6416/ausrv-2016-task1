@@ -19,7 +19,7 @@ void Algorithm::compute() {
 		JobWrapper * foundJobPtr;
 		while ((foundJobPtr = findAvailableJob()) != nullptr
 		       and curT < border
-		       and curChain.size() < maxChainLen) {
+		       and curChain.size() < maxChainSize) {
 //			std::cout << "hear" << std::endl;
 			// choose job and push it to chain
 			auto & j = *foundJobPtr;
@@ -30,42 +30,21 @@ void Algorithm::compute() {
 			
 //			std::cout << j.getId() << " [" << curT - j.getDuration();
 //			std::cout << ", " << curT << "]" << std::endl;
-//			std::cout << "last call" << j.
+//			std::cout << "job ptr " << &j << std::endl;
 		}
 		cycles.push_back(curChain);
 		
-		// move time to begin of the cycle
+		// move to time of the beginning of the next cycle
 		moveTime(cycleDuration - (curT % cycleDuration));
 		
 	}
-	
-	Time t = 0;
-	unsigned i;
-//	if (reserve == 19 and maxChainLen == 51)
-//		reserve = 17;
-	i = 0;
-	std::cout << "Algo (cycle max == " << maxChainLen << ")" << std::endl;
-	for (; i < cycles.size(); ++i) {
-		t = i * cycleDuration;
-		auto & chain = cycles[i];
-		std::cout << "chain " << i << std::endl;
-		unsigned j = 0;
-		for (; j < chain.size(); ++j) {
-			auto & job = chain[j];
-			std::cout << job.getId() << " [" << t;
-			t += job.getDuration();
-			std::cout << ", " << t << "]" << std::endl;
-		}
-		std::cout << "end of chain (len == " << j << ")" << std::endl;
-	}
-//	if (reserve == 17 and maxChainLen == 51)
-//		reserve = 17;
+	check();
 }
 
 void Algorithm::moveTime(const Time &shift) {
 	Time newT = curT + shift;
 	
-	// check the job expired in new time
+	// check the job expiring when time would be moved
 	for (auto & j : jobs) {
 		if (j.isExpired(newT))
 			throw JOB_WORKED_TIME_EXPIRED;
@@ -82,9 +61,9 @@ void Algorithm::clear() {
 
 Algorithm::Algorithm(const std::unordered_set<Job> &jobs, const Time &cycleDuration,
                      const unsigned int maxChainLen, const Percent &reserve) :
-	cycleDuration(cycleDuration * (MAX_PERCENT - reserve) / MAX_PERCENT),
-	maxChainLen(maxChainLen),
-//	reserve(reserve),
+	usefulCycleDuration(cycleDuration * (MAX_PERCENT - reserve) / MAX_PERCENT),
+	cycleDuration(cycleDuration),
+	maxChainSize(maxChainLen),
     border(1)
 {
 	for (auto & j : jobs) {
@@ -102,9 +81,9 @@ JobWrapper * Algorithm::findAvailableJob() {
 		if (priority >= 0 and job.isWait(curT)) {
 //			if (job.getId() == 0)
 //				std::cout << job.getId() << " and " << job.getPriority(curT) << std::endl;
-//			if (job.getId() == 156)
+//			if (job.getId() == 14)
 //				std::cout << job.getId() << " and " << job.getPriority(curT) << std::endl;
-			if (foundPriority < 0 or priority < foundPriority) {
+			if ((foundPriority < 0) or (priority < foundPriority)) {
 //				foundJobPtr = const_cast<JobWrapper *>(&job);
 				foundPriority = priority;
 				foundJobPtr = &job;
@@ -120,10 +99,53 @@ void Algorithm::addJobToChain(Chain & c, JobWrapper &j) {
 }
 
 bool Algorithm::isCycleChanged(const Time &shift) {
-	return (curT / cycleDuration) != ((curT + shift) / cycleDuration);
+	return (curT / usefulCycleDuration) != ((curT + shift) / usefulCycleDuration);
 }
-//
-//bool Algorithm::isInReserved(const Time &shift) {
-//	return curT % cycleDuration + shift > cycleDuration;
-//}
 
+// validate answer
+void Algorithm::check() {
+	for (auto & jobWrap : jobs) {
+		auto & job = jobWrap.getJob();
+		std::vector<bool> jobCalled;
+		for (unsigned i = 0; i < (border / job.getPeriod()); ++i)
+			jobCalled.push_back(false);
+		
+		Time time;
+		for (unsigned i = 0; i < cycles.size(); ++i) {
+			auto & chain = cycles[i];
+			time = i * cycleDuration;
+			for (unsigned j = 0; j < chain.size(); ++j) {
+				auto localPeriodTime = time % job.getPeriod();
+				if (chain[j].getId() == jobWrap.getId()) {
+					// check time in [begin,end] interval
+					if (not (job.getBegin() <= localPeriodTime
+					         and localPeriodTime + job.getDuration() <= job.getEnd()))
+						throw;
+					// check time not in reserve time
+					if (time % cycleDuration > usefulCycleDuration)
+						throw;
+					jobCalled[time / job.getPeriod()] = true;
+				}
+				time += job.getDuration();
+			}
+		}
+		// check that job is processed in every period
+		for (auto called : jobCalled)
+			if (not called)
+				throw;
+	}
+}
+
+void Algorithm::printResults() {
+	std::cout << "r_rf = " << static_cast<float>(usefulCycleDuration) / cycleDuration << std::endl;
+	std::cout << "r_mcc = " << maxChainSize << std::endl;
+	
+//	Time t = 0;
+	for (unsigned i = 0; i < cycles.size(); ++i) {
+		std::cout << i * cycleDuration;
+		for (unsigned j = 0; j < cycles[i].size(); ++j) {
+			std::cout << ' ' << cycles[i][j].getId();
+		}
+		std::cout << std::endl;
+	}
+}

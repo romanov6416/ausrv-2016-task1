@@ -8,9 +8,6 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
-//#include <math>
-//#include <boost>
-//#include <hash>
 
 #include "Types.h"
 #include "JobWrapper.h"
@@ -24,19 +21,21 @@ public:
 	Algorithm(const std::unordered_set<Job> &jobs, const Time &cycleDuration, const unsigned int maxChainLen,
 	          const Percent &reserve);
 	void compute();
+	void printResults();
 	void clear();
 
 private:
 	void moveTime(const Time &shift);
 	bool isCycleChanged(const Time &shift);
 	void addJobToChain(Chain & c, JobWrapper &j);
-//	JobWrapper & popWaitedJobByCriteria(JobWrapper *foundJobPtr);
+	void check();
 	
 	JobWrapper * findAvailableJob();
 	
 	std::unordered_set<JobWrapper> jobs;
+	Time usefulCycleDuration;
 	Time cycleDuration;
-	unsigned maxChainLen;
+	unsigned maxChainSize;
 //	Percent reserve;
 	Time border;
 	

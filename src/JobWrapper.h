@@ -11,7 +11,6 @@
 class JobWrapper {
 	const Job & job;
 	Time lastStartTime;
-	int criteriaValue;
 public:
 	JobWrapper(const Job &job);
 	unsigned getId() const;
@@ -20,10 +19,12 @@ public:
 
 	void setLastStartTime(Time lastStartTime);
 //	int getCriteriaValue(const Time &curTime) const;
-
+	const Job &getJob() const;
+	
 	bool operator==(const JobWrapper &rhs) const;
 	bool operator!=(const JobWrapper &rhs) const;
-	int getPriority(const Time &t) const;
+	int getPriority(const Time &t) const; // return run priority if can be run or value<0
+	bool canBeRunInPeriod(const Time &t) const;
 	bool isExpired(const Time &t) const ;
 };
 
