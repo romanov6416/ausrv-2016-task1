@@ -2,41 +2,37 @@
 // Created by andrey on 04.12.16.
 //
 
+#include <iostream>
 #include "JobWrapper.h"
 #include "Exceptions.h"
 
 
-JobWrapper::JobWrapper(const Job &job) : job(job), lastStartTime(UNDEFINED_TIME) {
-	criteriaValue = static_cast<int>(job.getEnd() - job.getBegin() - job.getDuration());
-	if (criteriaValue < 0)
-		throw WRONG_CRITERIA_VALUE;
-}
+JobWrapper::JobWrapper(const Job &job) : job(job), lastStartTime(UNDEFINED_TIME) {}
 
 bool JobWrapper::isWait(const Time & t) const {
-	return lastStartTime == UNDEFINED_TIME
-           or (lastStartTime / job.getPeriod()) < (t / job.getPeriod());
+	return (lastStartTime == UNDEFINED_TIME)
+           or ((lastStartTime / job.getPeriod()) < (t / job.getPeriod()));
 }
 
-bool JobWrapper::isCanRun(const Time &t, const Percent & reserve) const {
+int JobWrapper::getPriority(const Time &t) const {
 	auto localPeriodTime = t % job.getPeriod();
-	// note reserve; end of run time can be changed
-	auto endRunTime = std::min(job.getEnd(), job.getPeriod() * (MAX_PERCENT - reserve) / MAX_PERCENT);
-	return (localPeriodTime < job.getBegin()) // can not be running now, but can be running later
-           or (localPeriodTime + job.getDuration() <= endRunTime); // check we have time to run job
-
+	if (localPeriodTime < job.getBegin())
+		return -1;
+	auto priority = job.getEnd() - localPeriodTime - job.getDuration();
+	return static_cast<int>(priority);
 }
 
 unsigned JobWrapper::getId() const {
 	return job.getId();
 }
 
-bool JobWrapper::isExpired(const Time &t, const Percent &reserve) const{
+bool JobWrapper::isExpired(const Time &t) const{
 	auto lastPeriodNumber = lastStartTime / job.getPeriod();
 	auto curPeriodNumber = t / job.getPeriod();
 	if (lastPeriodNumber < curPeriodNumber) {
 		if (curPeriodNumber - lastPeriodNumber > 1)
 			return true;
-		if (not isCanRun(t, reserve))
+		if (getPriority(t) < 0)
 			return true;
 	}
 	return false;
@@ -57,7 +53,11 @@ bool JobWrapper::operator!=(const JobWrapper &rhs) const {
 void JobWrapper::setLastStartTime(Time lastStartTime) {
 	this->lastStartTime = lastStartTime;
 }
-
-int JobWrapper::getCriteriaValue() const {
-	return criteriaValue;
-}
+//
+//int JobWrapper::getCriteriaValue(const Time &curTime) const {
+//	auto criteriaValue = job.getEnd() - job.getBegin() - job.getDuration();
+//	std::cout << job.getId() << " " << criteriaValue << std::endl;
+//	if (criteriaValue < 0)
+//		throw WRONG_CRITERIA_VALUE;
+//	return static_cast<int>(criteriaValue);
+//}

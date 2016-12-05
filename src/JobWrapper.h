@@ -19,12 +19,12 @@ public:
 	bool isWait(const Time & t) const;
 
 	void setLastStartTime(Time lastStartTime);
-	int getCriteriaValue() const;
+//	int getCriteriaValue(const Time &curTime) const;
 
 	bool operator==(const JobWrapper &rhs) const;
 	bool operator!=(const JobWrapper &rhs) const;
-	bool isCanRun(const Time & t, const Percent & ) const;
-	bool isExpired(const Time &t, const Percent &) const ;
+	int getPriority(const Time &t) const;
+	bool isExpired(const Time &t) const ;
 };
 
 namespace std {

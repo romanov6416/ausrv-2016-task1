@@ -29,15 +29,15 @@ public:
 private:
 	void moveTime(const Time &shift);
 	bool isCycleChanged(const Time &shift);
-	void addJobToChain(JobWrapper &j);
-	JobWrapper & popWaitedJobByCriteria(JobWrapper *foundJobPtr);
+	void addJobToChain(Chain & c, JobWrapper &j);
+//	JobWrapper & popWaitedJobByCriteria(JobWrapper *foundJobPtr);
 	
-	JobWrapper * findAvailableJobs();
+	JobWrapper * findAvailableJob();
 	
 	std::unordered_set<JobWrapper> jobs;
 	Time cycleDuration;
 	unsigned maxChainLen;
-	Percent reserve;
+//	Percent reserve;
 	Time border;
 	
 	Time curT;

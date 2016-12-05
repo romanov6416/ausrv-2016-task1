@@ -26,30 +26,41 @@ int main(int argc, char * argv[]) {
 		
 //		std::cout << "jobs: " << jobs.size() << '\n';
 		Percent bestReserve = UNDEFINED_PERCENT;
-		for (Percent reserve = MIN_PERCENT; reserve <= MAX_PERCENT; ++reserve) {
-			try {
-				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), static_cast<int>(jobs.size()), reserve);
-				a.compute();
-			} catch (Exception & e) {
-//				std::cout << "fail to build plan with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
+		unsigned minChainMaxSize = 0;
+		for (Percent reserve = MAX_PERCENT - 1; reserve >= MIN_PERCENT; --reserve) {
+			for (unsigned maxChainSize = 1; maxChainSize < jobs.size(); ++maxChainSize) {
+				try {
+					Algorithm a(jobs, static_cast<unsigned>(cycleDuration), static_cast<int>(maxChainSize), reserve);
+					a.compute();
+				} catch (Exception &e) {
+					//				std::cout << "fail to build plan with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
+					continue;
+				}
+				//			std::cout << "success to build plat with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
+				bestReserve = reserve;
+				minChainMaxSize = maxChainSize;
+				break;
+			}
+			if (bestReserve == UNDEFINED_PERCENT) {
+				std::cout << "for reserve " << reserve << "% solving is not found" << std::endl;
 				continue;
 			}
-//			std::cout << "success to build plat with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
-			bestReserve = reserve;
-		}
-		unsigned minChainSize = jobs.size() + 1;
-		std::cout << "best reserve " << bestReserve << "%" << std::endl;
-		for (unsigned chainSize = 1; chainSize < jobs.size(); ++chainSize) {
-			try {
-				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), chainSize, bestReserve);
-				a.compute();
-			} catch(Exception & e) {
-				continue;
-			}
-			minChainSize = chainSize;
 			break;
 		}
-		std::cout << "min chain size " << minChainSize << std::endl;
+//		auto minChainSize = jobs.size() + 1;
+//		std::cout << "best reserve " << bestReserve << "%" << std::endl;
+//		for (unsigned chainSize = 1; chainSize < jobs.size(); ++chainSize) {
+//			try {
+//				Algorithm a(jobs, static_cast<unsigned>(cycleDuration), chainSize, bestReserve);
+//				a.compute();
+//			} catch(Exception & e) {
+//				continue;
+//			}
+//			minChainSize = chainSize;
+//			break;
+//		}
+		std::cout << "best reserve " << bestReserve << "%" << std::endl;
+		std::cout << "min chain size " << minChainMaxSize << std::endl;
 		
 		
 		
