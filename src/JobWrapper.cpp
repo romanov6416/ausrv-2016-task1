@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include "JobWrapper.h"
-#include "Exceptions.h"
 
 
 JobWrapper::JobWrapper(const Job &job) : job(job), lastStartTime(UNDEFINED_TIME) {}
@@ -39,7 +38,7 @@ bool JobWrapper::isExpired(const Time &t) const{
 		if (not canBeRunInPeriod(t))
 			return true;
 	}
-	//	impossible: lastRunPeriodNumber < curPeriodNumber
+	//	impossible: lastRunPeriodNumber < curP(eriodNumber
 	//	if (lastRunPeriodNumber == curPeriodNumber) then job is already run
 	return false;
 }
@@ -57,6 +56,7 @@ bool JobWrapper::operator!=(const JobWrapper &rhs) const {
 }
 
 void JobWrapper::setLastStartTime(Time lastStartTime) {
+	called.push_back(lastStartTime);
 	this->lastStartTime = lastStartTime;
 }
 
@@ -69,11 +69,3 @@ bool JobWrapper::canBeRunInPeriod(const Time &t) const {
 const Job &JobWrapper::getJob() const {
 	return job;
 }
-//
-//int JobWrapper::getCriteriaValue(const Time &curTime) const {
-//	auto criteriaValue = job.getEnd() - job.getBegin() - job.getDuration();
-//	std::cout << job.getId() << " " << criteriaValue << std::endl;
-//	if (criteriaValue < 0)
-//		throw WRONG_CRITERIA_VALUE;
-//	return static_cast<int>(criteriaValue);
-//}

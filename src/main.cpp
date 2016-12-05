@@ -48,7 +48,9 @@ int main(int argc, char * argv[]) {
 			std::cout << "the schedule can not be built" << std::endl;
 		} else {
 			solve->printResults();
+			solve->check();
 		}
+		delete solve;
 	} catch(const char * err) {
 		std::cerr << "string exc: " << err << std::endl;
 	} catch(Exception e) {

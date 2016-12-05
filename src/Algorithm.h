@@ -23,20 +23,19 @@ public:
 	void compute();
 	void printResults();
 	void clear();
+	void check(); // validate answer
 
 private:
 	void moveTime(const Time &shift);
 	bool isCycleChanged(const Time &shift);
+	bool isInReserve(const Time & t);
 	void addJobToChain(Chain & c, JobWrapper &j);
-	void check();
-	
 	JobWrapper * findAvailableJob();
 	
 	std::unordered_set<JobWrapper> jobs;
 	Time usefulCycleDuration;
 	Time cycleDuration;
 	unsigned maxChainSize;
-//	Percent reserve;
 	Time border;
 	
 	Time curT;

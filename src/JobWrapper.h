@@ -11,6 +11,7 @@
 class JobWrapper {
 	const Job & job;
 	Time lastStartTime;
+	std::vector<Time> called;
 public:
 	JobWrapper(const Job &job);
 	unsigned getId() const;
