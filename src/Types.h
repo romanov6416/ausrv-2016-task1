@@ -5,11 +5,9 @@
 #ifndef DATA_TRANSMISSION_SHEDULE_TYPES_H
 #define DATA_TRANSMISSION_SHEDULE_TYPES_H
 
-//#include "Job.h"
 #include <vector>
 
 typedef long int Time;
-//typedef Time Duration;
 typedef int Percent;
 
 

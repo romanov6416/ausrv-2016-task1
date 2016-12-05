@@ -10,7 +10,6 @@ int main(int argc, char * argv[]) {
 		return -1;
 	}
 	try {
-		//"../data/S1_SHIFT_20ms_025_055_021.txt"
 		auto jobs(Parser::parseJobs(argv[1]));
 		
 		std::string::size_type sz;
@@ -35,7 +34,6 @@ int main(int argc, char * argv[]) {
 				}
 				//			std::cout << "success to build plat with reserve " << reserve << "% (code " <<  e << ")" << std::endl;
 				bestReserve = reserve;
-//				minChainMaxSize = maxChainSize;
 				break;
 			}
 			if (bestReserve == UNDEFINED_PERCENT) {

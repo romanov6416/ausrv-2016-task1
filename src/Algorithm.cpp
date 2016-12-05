@@ -39,33 +39,7 @@ void Algorithm::compute() {
 		moveTime(cycleDuration - (curT % cycleDuration));
 		
 	}
-	
-//	Time t;
-//	unsigned i = 0;
-//	std::cout << "Algo (cycle max == " << maxChainSize << ")" << std::endl;
-//	for (; i < cycles.size(); ++i) {
-//		t = i * cycleDuration;
-//		auto & chain = cycles[i];
-//		std::cout << "chain " << i << std::endl;
-//		unsigned j = 0;
-//		for (; j < chain.size(); ++j) {
-//			auto & job = chain[j];
-//			std::cout << job.getId() << " [" << t;
-//			t += job.getDuration();
-//			std::cout << ", " << t << "]" << std::endl;
-//		}
-//		std::cout << "end of chain (len == " << j << ")" << std::endl;
-//	}
-	
 }
-
-/*
-
-const Time lcm(const Time & l, const Time & r) {
-	auto a = l, b = r;
-	return
-}
-*/
 
 void Algorithm::moveTime(const Time &shift) {
 	Time newT = curT + shift;
