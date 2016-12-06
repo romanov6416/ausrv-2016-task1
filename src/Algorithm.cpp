@@ -2,18 +2,12 @@
 // Created by andrey on 01.12.16.
 //
 #include <iostream>
+#include <algorithm>
 
 #include "Algorithm.h"
 #include "Exceptions.h"
 
-
-const Time gcd(const Time & a, const Time & b) {
-	return b == 0 ? a : gcd(b, a % b);
-}
-
-const Time lcm(const Time & a, const Time & b) {
-	return abs(a * b) / gcd(a, b);
-}
+#include <boost/math/common_factor_rt.hpp>
 
 
 void Algorithm::compute() {
@@ -66,8 +60,7 @@ Algorithm::Algorithm(const std::unordered_set<Job> &jobs, const Time &cycleDurat
 {
 	for (auto & j : jobs) {
 		this->jobs.insert(JobWrapper(j));
-		border = lcm(border, j.getPeriod());
-//		border = boost::math::lcm(border, j.getPeriod());
+		border = boost::math::lcm(border, j.getPeriod());
 	}
 }
 
